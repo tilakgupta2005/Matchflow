@@ -1,6 +1,6 @@
--- Run this in the Supabase SQL Editor
+-- Run this in the Supabase SQL Editor to completely wipe and recreate your tables
 
--- Create Users table (extends Supabase auth.users optionally, but for simplicity we keep it standalone based on your code)
+-- Create Users table (extends Supabase auth.users optionally)
 CREATE TABLE public.users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   email TEXT NOT NULL,
@@ -10,7 +10,6 @@ CREATE TABLE public.users (
   "profileComplete" BOOLEAN DEFAULT false,
   "contactEmail" TEXT,
   "contactPhone" TEXT,
-  website TEXT
 );
 
 -- Create Influencer Profiles table
@@ -78,7 +77,6 @@ CREATE TABLE public.notifications (
 );
 
 -- Disable Row Level Security (RLS) temporarily for development
--- (In production, you should enable RLS and add policies)
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.influencer_profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaigns DISABLE ROW LEVEL SECURITY;

@@ -41,10 +41,13 @@ const BrandProfileEdit = () => {
     }
   }, [user]);
 
-  if (!user || user.role !== 'brand') {
-    navigate('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (!user || user.role !== 'brand') {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  if (!user || user.role !== 'brand') return null;
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();

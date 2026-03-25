@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { useStore, UserRole } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,17 @@ const Auth = () => {
   const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>(preRole || 'influencer');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'login' || urlMode === 'signup') {
+      setMode(urlMode);
+    }
+    const urlRole = searchParams.get('role');
+    if (urlRole === 'influencer' || urlRole === 'brand') {
+      setRole(urlRole as import('@/store/useStore').UserRole);
+    }
+  }, [searchParams]);
 
   // If already logged in, must logout first
   // If already logged in, redirect to dashboard

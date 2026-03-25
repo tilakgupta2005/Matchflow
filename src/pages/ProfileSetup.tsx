@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,13 @@ const ProfileSetup = () => {
   const [campaignState, setCampaignState] = useState('');
   const [campaignCity, setCampaignCity] = useState('');
 
-  if (!user) { navigate('/auth?mode=signup'); return null; }
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth?mode=signup');
+    }
+  }, [user, navigate]);
+
+  if (!user) return null;
 
   const addNiche = () => {
     const trimmed = nicheInput.trim();

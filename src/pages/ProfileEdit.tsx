@@ -73,8 +73,15 @@ const ProfileEdit = () => {
     }
   }, [profile]);
 
-  if (!user || user.role !== 'influencer') { navigate('/dashboard'); return null; }
-  if (!profile) { navigate('/profile-setup'); return null; }
+  useEffect(() => {
+    if (!user || user.role !== 'influencer') {
+      navigate('/dashboard');
+    } else if (!profile) {
+      navigate('/profile-setup');
+    }
+  }, [user, profile, navigate]);
+
+  if (!user || user.role !== 'influencer' || !profile) return null;
 
   const addNiche = () => {
     const trimmed = nicheInput.trim();

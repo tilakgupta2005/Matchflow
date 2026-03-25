@@ -151,7 +151,7 @@ const Campaigns = () => {
                   <span className={`px-2 py-0.5 rounded-pill text-xs font-medium ${c.status === 'active' ? 'bg-secondary/20 text-secondary' : c.status === 'paused' ? 'bg-mustard-light text-foreground' : 'bg-muted text-muted-foreground'}`}>{c.status}</span>
                 </div>
                 <h3 className="font-bold mb-1">{c.title}</h3>
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{c.description}</p>
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">{c.description}</p>
                 <div className="flex flex-wrap gap-1 mb-4">
                   {c.deliverables.slice(0, 3).map((d) => (<span key={d} className="text-xs bg-muted rounded-lg px-2 py-1 truncate max-w-[120px]">{d}</span>))}
                   {c.deliverables.length > 3 && <span className="text-xs bg-muted rounded-lg px-2 py-1 flex-shrink-0">+{c.deliverables.length - 3}</span>}
@@ -221,7 +221,7 @@ const Campaigns = () => {
                     <span className="px-2 py-0.5 rounded-pill bg-primary/10 text-primary text-xs font-medium">{viewing.category}</span>
                     <span className="px-2 py-0.5 rounded-pill bg-secondary/20 text-secondary text-xs font-medium capitalize">{viewing.status}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{viewing.description}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{viewing.description}</p>
                   <div><Label className="text-xs text-muted-foreground">Budget</Label><p className="font-bold text-lg">{formatIndianCurrency(viewing.budget)}</p></div>
                   {(viewing.country || viewing.state || viewing.city) && (
                     <div><Label className="text-xs text-muted-foreground">Target Region</Label><p className="text-sm font-medium">{[viewing.city, viewing.state, viewing.country].filter(Boolean).join(', ')}</p></div>
