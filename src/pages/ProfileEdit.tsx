@@ -8,6 +8,7 @@ import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 const SOCIAL_PLATFORMS = ['Instagram', 'YouTube', 'TikTok'] as const;
 
@@ -21,6 +22,9 @@ const ProfileEdit = () => {
   const [followers, setFollowers] = useState('');
   const [engagement, setEngagement] = useState('');
   const [bio, setBio] = useState('');
+  const [country, setCountry] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [city, setCity] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhoneCode, setContactPhoneCode] = useState('+91');
   const [contactPhoneNumber, setContactPhoneNumber] = useState('');
@@ -34,12 +38,19 @@ const ProfileEdit = () => {
   const [postMin, setPostMin] = useState('');
   const [postMax, setPostMax] = useState('');
 
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
   useEffect(() => {
     if (profile) {
       setNiches(profile.niches);
       setFollowers(String(profile.followers));
       setEngagement(String(profile.engagementRate));
       setBio(profile.bio);
+      setCountry(profile.country || '');
+      setStateName(profile.state || '');
+      setCity(profile.city || '');
       setContactEmail(profile.contactEmail);
       
       const phone = profile.contactPhone || '';
@@ -125,9 +136,42 @@ const ProfileEdit = () => {
       pricePost: { min: Number(postMin), max: Number(postMax) },
       bio, contactEmail, contactPhone: fullContactPhone,
       socialLinks: socialLinks.filter(l => l.url.trim()),
+      country: country.trim() || undefined,
+      state: stateName.trim() || undefined,
+      city: city.trim() || undefined,
     });
     toast.success('Profile updated!');
     navigate('/dashboard');
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!currentPassword) { toast.error('Please enter your current password'); return; }
+    if (!newPassword) return;
+    if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    if (newPassword !== confirmNewPassword) { toast.error('Passwords do not match'); return; }
+
+    try {
+      if (!user?.email) return;
+      
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (verifyError) {
+        toast.error('Incorrect current password');
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success('Password updated successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err: any) {
+      toast.error(err.message || 'Error updating password');
+    }
   };
 
   return (
@@ -182,6 +226,13 @@ const ProfileEdit = () => {
               <div><Label className="text-xs text-card-foreground">Post Max <span className="text-destructive">*</span></Label><Input type="number" min="0" value={postMax} onChange={(e) => setPostMax(e.target.value)} required /></div>
             </div>
 
+            <h3 className="font-semibold text-sm pt-2 text-card-foreground">Location</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label className="text-xs text-card-foreground">Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="India" /></div>
+              <div><Label className="text-xs text-card-foreground">State / Region</Label><Input value={stateName} onChange={(e) => setStateName(e.target.value)} placeholder="Maharashtra" /></div>
+              <div><Label className="text-xs text-card-foreground">City</Label><Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Mumbai" /></div>
+            </div>
+
             <h3 className="font-semibold text-sm pt-2 text-card-foreground">Contact Details</h3>
             <div><Label className="text-card-foreground">Email <span className="text-destructive">*</span></Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address" required /></div>
             <div>
@@ -225,6 +276,27 @@ const ProfileEdit = () => {
               <Save className="mr-2 h-4 w-4" /> Save Changes
             </Button>
           </form>
+
+          <hr className="my-8" />
+          
+          <h2 className="text-xl font-bold mb-4 text-card-foreground">Change Password</h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-card-foreground">Current Password</Label>
+              <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div>
+              <Label className="text-card-foreground">New Password</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div>
+              <Label className="text-card-foreground">Confirm New Password</Label>
+              <Input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button type="button" variant="outline" onClick={handlePasswordUpdate}>
+              Update Password
+            </Button>
+          </div>
         </div>
       </div>
       <Footer />

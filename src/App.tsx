@@ -7,8 +7,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import ProfileSetup from "./pages/ProfileSetup";
 import ProfileEdit from "./pages/ProfileEdit";
+import BrandProfileEdit from "./pages/BrandProfileEdit";
 import Discovery from "./pages/Discovery";
 import Dashboard from "./pages/Dashboard";
 import Negotiation from "./pages/Negotiation";
@@ -53,8 +55,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/profile-edit" element={<ProfileEdit />} />
+            <Route path="/brand-profile-edit" element={<BrandProfileEdit />} />
             <Route path="/discover" element={<Discovery />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/negotiation/:dealId" element={<Negotiation />} />

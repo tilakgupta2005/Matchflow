@@ -21,6 +21,9 @@ const ProfileSetup = () => {
   const [followers, setFollowers] = useState('');
   const [engagement, setEngagement] = useState('');
   const [bio, setBio] = useState('');
+  const [country, setCountry] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [city, setCity] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhoneCode, setContactPhoneCode] = useState('+91');
   const [contactPhoneNumber, setContactPhoneNumber] = useState('');
@@ -46,6 +49,9 @@ const ProfileSetup = () => {
   const [brandContactPhoneCode, setBrandContactPhoneCode] = useState('+91');
   const [brandContactPhoneNumber, setBrandContactPhoneNumber] = useState('');
   const [productLink, setProductLink] = useState('');
+  const [campaignCountry, setCampaignCountry] = useState('');
+  const [campaignState, setCampaignState] = useState('');
+  const [campaignCity, setCampaignCity] = useState('');
 
   if (!user) { navigate('/auth?mode=signup'); return null; }
 
@@ -111,6 +117,9 @@ const ProfileSetup = () => {
         bio, platforms: socialLinks.map(l => l.platform),
         contactEmail, contactPhone: fullContactPhone,
         socialLinks: socialLinks.filter(l => l.url.trim()),
+        country: country.trim() || undefined,
+        state: stateName.trim() || undefined,
+        city: city.trim() || undefined,
       });
     } else {
       if (!emailRegex.test(brandContactEmail)) { toast.error('Please enter a valid contact email'); return; }
@@ -125,6 +134,9 @@ const ProfileSetup = () => {
         title: campaignTitle, description: campaignDesc, budget: Number(budget),
         category, deliverables: deliverables.split(',').map((d) => d.trim()), status: 'active',
         contactEmail: brandContactEmail, contactPhone: fullBrandPhone, productLink,
+        country: campaignCountry.trim() || undefined,
+        state: campaignState.trim() || undefined,
+        city: campaignCity.trim() || undefined,
       });
     }
     setUser({ ...user, profileComplete: true });
@@ -187,6 +199,13 @@ const ProfileSetup = () => {
                   <div><Label className="text-xs">Post Max <span className="text-destructive">*</span></Label><Input type="number" min="0" value={postMax} onChange={(e) => setPostMax(e.target.value)} placeholder="800" required /></div>
                 </div>
 
+                <h3 className="font-semibold text-sm pt-2">Location</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label className="text-xs">Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="India" /></div>
+                  <div><Label className="text-xs">State / Region</Label><Input value={stateName} onChange={(e) => setStateName(e.target.value)} placeholder="Maharashtra" /></div>
+                  <div><Label className="text-xs">City</Label><Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Mumbai" /></div>
+                </div>
+
                 <h3 className="font-semibold text-sm pt-2">Contact Details</h3>
                 <div><Label>Email <span className="text-destructive">*</span></Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@email.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address" required /></div>
                 <div>
@@ -235,6 +254,13 @@ const ProfileSetup = () => {
                   <div><Label>Category <span className="text-destructive">*</span></Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Beauty, Tech..." required /></div>
                 </div>
                 <div><Label>Deliverables (comma-separated) <span className="text-destructive">*</span></Label><Input value={deliverables} onChange={(e) => setDeliverables(e.target.value)} placeholder="3 Posts, 2 Stories, 1 Reel" required /></div>
+
+                <h3 className="font-semibold text-sm pt-2">Target Region</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label className="text-xs">Country</Label><Input value={campaignCountry} onChange={(e) => setCampaignCountry(e.target.value)} placeholder="India" /></div>
+                  <div><Label className="text-xs">State / Region</Label><Input value={campaignState} onChange={(e) => setCampaignState(e.target.value)} placeholder="Karnataka" /></div>
+                  <div><Label className="text-xs">City</Label><Input value={campaignCity} onChange={(e) => setCampaignCity(e.target.value)} placeholder="Bengaluru" /></div>
+                </div>
 
                 <h3 className="font-semibold text-sm pt-2">Contact Details</h3>
                 <div><Label>Contact Email <span className="text-destructive">*</span></Label><Input type="email" value={brandContactEmail} onChange={(e) => setBrandContactEmail(e.target.value)} placeholder="marketing@brand.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address" required /></div>

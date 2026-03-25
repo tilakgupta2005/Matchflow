@@ -28,6 +28,9 @@ const Campaigns = () => {
   const [contactPhoneCode, setContactPhoneCode] = useState('+91');
   const [contactPhoneNumber, setContactPhoneNumber] = useState('');
   const [productLink, setProductLink] = useState('');
+  const [campaignCountry, setCampaignCountry] = useState('');
+  const [campaignState, setCampaignState] = useState('');
+  const [campaignCity, setCampaignCity] = useState('');
   const [viewCampaign, setViewCampaign] = useState<string | null>(null);
 
   if (!user || user.role !== 'brand') { navigate('/dashboard'); return null; }
@@ -39,7 +42,12 @@ const Campaigns = () => {
     setContactEmail('');
     setContactPhoneCode('+91');
     setContactPhoneNumber('');
-    setProductLink(''); setEditingId(null); };
+    setProductLink(''); 
+    setCampaignCountry('');
+    setCampaignState('');
+    setCampaignCity('');
+    setEditingId(null); 
+  };
 
   const openCreate = () => { resetForm(); setDialogOpen(true); };
 
@@ -60,6 +68,9 @@ const Campaigns = () => {
       }
       
       setProductLink(c.productLink || '');
+      setCampaignCountry(c.country || '');
+      setCampaignState(c.state || '');
+      setCampaignCity(c.city || '');
     setEditingId(id); setDialogOpen(true);
   };
 
@@ -80,14 +91,20 @@ const Campaigns = () => {
     }
     const fullContactPhone = cleanPhone ? `${contactPhoneCode} ${cleanPhone}` : '';
 
+    const locationData = {
+      country: campaignCountry.trim() || undefined,
+      state: campaignState.trim() || undefined,
+      city: campaignCity.trim() || undefined,
+    };
+
     if (editingId) {
-      updateCampaign(editingId, { title, description, budget: Number(budget), category, deliverables: deliverables.split(',').map((d) => d.trim()), contactEmail, contactPhone: fullContactPhone, productLink });
+      updateCampaign(editingId, { title, description, budget: Number(budget), category, deliverables: deliverables.split(',').map((d) => d.trim()), contactEmail, contactPhone: fullContactPhone, productLink, ...locationData });
       toast.success('Campaign updated!');
     } else {
       addCampaign({
         id: crypto.randomUUID(), brandId: user.id, brandName: user.name,
         title, description, budget: Number(budget), category, deliverables: deliverables.split(',').map((d) => d.trim()),
-        status: 'active', contactEmail, contactPhone: fullContactPhone, productLink
+        status: 'active', contactEmail, contactPhone: fullContactPhone, productLink, ...locationData
       });
       toast.success('Campaign created!');
     }
@@ -156,7 +173,7 @@ const Campaigns = () => {
         )}
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <DialogHeader><DialogTitle>{editingId ? 'Edit Campaign' : 'Create New Campaign'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-2">
               <div><Label>Campaign Title <span className="text-destructive">*</span></Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Summer Launch Campaign" required /></div>
@@ -165,6 +182,14 @@ const Campaigns = () => {
                 <div><Label>Budget (₹) <span className="text-destructive">*</span></Label><Input type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="50000" required /></div>
                 <div><Label>Category <span className="text-destructive">*</span></Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Beauty, Tech..." required /></div>
               </div>
+              
+              <h3 className="font-semibold text-sm pt-2">Target Region</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label className="text-xs">Country</Label><Input value={campaignCountry} onChange={(e) => setCampaignCountry(e.target.value)} placeholder="India" /></div>
+                <div><Label className="text-xs">State / Region</Label><Input value={campaignState} onChange={(e) => setCampaignState(e.target.value)} placeholder="Karnataka" /></div>
+                <div><Label className="text-xs">City</Label><Input value={campaignCity} onChange={(e) => setCampaignCity(e.target.value)} placeholder="Bengaluru" /></div>
+              </div>
+              
               <div><Label>Deliverables (comma-separated) <span className="text-destructive">*</span></Label><Input value={deliverables} onChange={(e) => setDeliverables(e.target.value)} placeholder="3 Posts, 2 Stories, 1 Reel" required /></div>
               <div><Label>Contact Email</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="marketing@brand.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address" /></div>
               <div>
@@ -187,7 +212,7 @@ const Campaigns = () => {
         </Dialog>
 
         <Dialog open={!!viewCampaign} onOpenChange={() => setViewCampaign(null)}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {viewing && (
               <>
                 <DialogHeader><DialogTitle>{viewing.title}</DialogTitle></DialogHeader>
@@ -198,6 +223,9 @@ const Campaigns = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">{viewing.description}</p>
                   <div><Label className="text-xs text-muted-foreground">Budget</Label><p className="font-bold text-lg">{formatIndianCurrency(viewing.budget)}</p></div>
+                  {(viewing.country || viewing.state || viewing.city) && (
+                    <div><Label className="text-xs text-muted-foreground">Target Region</Label><p className="text-sm font-medium">{[viewing.city, viewing.state, viewing.country].filter(Boolean).join(', ')}</p></div>
+                  )}
                   <div>
                     <Label className="text-xs text-muted-foreground">Deliverables</Label>
                     <div className="flex flex-wrap gap-1 mt-1">{viewing.deliverables.map((d) => (<span key={d} className="text-xs bg-muted rounded-lg px-2 py-1">{d}</span>))}</div>

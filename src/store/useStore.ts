@@ -11,6 +11,9 @@ export interface User {
   role: UserRole;
   avatar?: string;
   profileComplete: boolean;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
 }
 
 export interface PriceRange {
@@ -32,6 +35,9 @@ export interface InfluencerProfile {
   contactEmail: string;
   contactPhone: string;
   socialLinks: { platform: string; url: string }[];
+  country?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface Campaign {
@@ -47,6 +53,9 @@ export interface Campaign {
   contactEmail?: string;
   contactPhone?: string;
   productLink?: string;
+  country?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface DealTerms {

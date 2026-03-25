@@ -3,6 +3,7 @@ import { useStore } from '@/store/useStore';
 import { ArrowRight, Menu, X, LogOut, UserCog } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
 
 const Header = () => {
   const user = useStore((s) => s.user);
@@ -10,7 +11,8 @@ const Header = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     navigate('/');
     setMenuOpen(false);
@@ -49,6 +51,13 @@ const Header = () => {
                   </Button>
                 </Link>
               )}
+              {user.role === 'brand' && (
+                <Link to="/brand-profile-edit">
+                  <Button variant="ghost" size="sm" title="Edit Profile">
+                    <UserCog className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
               <Button variant="ghost" size="sm" onClick={logout} title="Logout">
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -74,6 +83,7 @@ const Header = () => {
             <>
               <Link to="/dashboard" className="text-sm font-medium" onClick={() => setMenuOpen(false)}>Dashboard</Link>
               {user.role === 'influencer' && <Link to="/profile-edit" className="text-sm font-medium" onClick={() => setMenuOpen(false)}>Edit Profile</Link>}
+              {user.role === 'brand' && <Link to="/brand-profile-edit" className="text-sm font-medium" onClick={() => setMenuOpen(false)}>Edit Profile</Link>}
               <button className="text-sm font-medium text-left text-destructive" onClick={logout}>Log out</button>
             </>
           ) : (

@@ -7,7 +7,10 @@ CREATE TABLE public.users (
   name TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('influencer', 'brand', 'admin')),
   avatar TEXT,
-  "profileComplete" BOOLEAN DEFAULT false
+  "profileComplete" BOOLEAN DEFAULT false,
+  "contactEmail" TEXT,
+  "contactPhone" TEXT,
+  website TEXT
 );
 
 -- Create Influencer Profiles table
@@ -24,7 +27,10 @@ CREATE TABLE public.influencer_profiles (
   "priceStory" JSONB DEFAULT '{"min": 0, "max": 0}'::jsonb,
   "priceShortVideo" JSONB DEFAULT '{"min": 0, "max": 0}'::jsonb,
   "priceLongVideo" JSONB DEFAULT '{"min": 0, "max": 0}'::jsonb,
-  "pricePost" JSONB DEFAULT '{"min": 0, "max": 0}'::jsonb
+  "pricePost" JSONB DEFAULT '{"min": 0, "max": 0}'::jsonb,
+  country TEXT,
+  state TEXT,
+  city TEXT
 );
 
 -- Create Campaigns table
@@ -41,6 +47,9 @@ CREATE TABLE public.campaigns (
   "contactEmail" TEXT,
   "contactPhone" TEXT,
   "productLink" TEXT,
+  country TEXT,
+  state TEXT,
+  city TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
