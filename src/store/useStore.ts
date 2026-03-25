@@ -81,6 +81,14 @@ export interface Deal {
   createdAt: string;
 }
 
+export interface DealMessage {
+  id: string;
+  dealId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   message: string;
@@ -94,6 +102,7 @@ interface AppState {
   influencerProfiles: InfluencerProfile[];
   campaigns: Campaign[];
   deals: Deal[];
+  dealMessages: DealMessage[];
   notifications: Notification[];
   isLoading: boolean;
   
@@ -102,6 +111,9 @@ interface AppState {
   fetchInfluencerProfiles: () => Promise<void>;
   fetchCampaigns: () => Promise<void>;
   fetchDeals: () => Promise<void>;
+  fetchDealMessages: (dealId: string) => Promise<void>;
+  subscribeToDealMessages: (dealId: string) => void;
+  unsubscribeFromDealMessages: () => void;
   fetchNotifications: () => Promise<void>;
   
   // Mutations
@@ -113,6 +125,7 @@ interface AppState {
   addDeal: (d: Deal) => Promise<void>;
   updateDealStatus: (dealId: string, status: DealStatus) => Promise<void>;
   updateDealTerms: (dealId: string, terms: DealTerms) => Promise<void>;
+  sendDealMessage: (dealId: string, content: string) => Promise<void>;
   updateCampaign: (id: string, data: Partial<Campaign>) => Promise<void>;
   deleteCampaign: (id: string) => Promise<void>;
   
@@ -128,6 +141,7 @@ export const useStore = create<AppState>((set, get) => ({
   influencerProfiles: [],
   campaigns: [],
   deals: [],
+  dealMessages: [],
   notifications: [],
   isLoading: true,
 
@@ -157,6 +171,34 @@ export const useStore = create<AppState>((set, get) => ({
   fetchDeals: async () => {
     const { data, error } = await supabase.from('deals').select('*').order('createdAt', { ascending: false });
     if (!error && data) set({ deals: data as Deal[] });
+  },
+
+  fetchDealMessages: async (dealId) => {
+    const { data, error } = await supabase.from('deal_messages').select('*').eq('dealId', dealId).order('createdAt', { ascending: true });
+    if (!error && data) set({ dealMessages: data as DealMessage[] });
+  },
+
+  subscribeToDealMessages: (dealId) => {
+    const channel = supabase.channel(`public:deal_messages:${dealId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'deal_messages', filter: `dealId=eq.${dealId}` }, (payload) => {
+        const newMsg = payload.new as DealMessage;
+        set((s) => {
+          if (s.dealMessages.some(m => m.id === newMsg.id)) return s;
+          return { dealMessages: [...s.dealMessages, newMsg] };
+        });
+      })
+      .subscribe();
+    
+    // Store channel instance in a non-state variable or just attach to window for cleanup
+    (window as any)._activeDealChannel = channel;
+  },
+
+  unsubscribeFromDealMessages: () => {
+    const channel = (window as any)._activeDealChannel;
+    if (channel) {
+      supabase.removeChannel(channel);
+      (window as any)._activeDealChannel = null;
+    }
   },
 
   fetchNotifications: async () => {
@@ -200,6 +242,18 @@ export const useStore = create<AppState>((set, get) => ({
   updateDealTerms: async (dealId, terms) => {
     const { error } = await supabase.from('deals').update({ terms, amount: terms.totalAmount }).eq('id', dealId);
     if (!error) set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms, amount: terms.totalAmount } : d) }));
+  },
+
+  sendDealMessage: async (dealId, content) => {
+    const user = get().user;
+    if (!user) return;
+    const msg = { dealId, senderId: user.id, content };
+    const { data, error } = await supabase.from('deal_messages').insert(msg).select().single();
+    if (!error && data) {
+      set((s) => ({ dealMessages: [...s.dealMessages, data as DealMessage] }));
+    } else {
+      console.error('Error sending message:', error);
+    }
   },
 
   updateCampaign: async (id, data) => {

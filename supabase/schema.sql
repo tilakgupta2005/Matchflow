@@ -76,9 +76,19 @@ CREATE TABLE public.notifications (
   "userId" UUID REFERENCES public.users(id) ON DELETE CASCADE
 );
 
+-- Create Deal Messages table
+CREATE TABLE public.deal_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  "dealId" UUID REFERENCES public.deals(id) ON DELETE CASCADE,
+  "senderId" UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Disable Row Level Security (RLS) temporarily for development
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.influencer_profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaigns DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.deals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.deal_messages DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications DISABLE ROW LEVEL SECURITY;

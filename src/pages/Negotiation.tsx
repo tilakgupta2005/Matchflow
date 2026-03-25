@@ -3,8 +3,8 @@ import { useStore, DealStatus } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, CheckCircle2, Lock, XCircle, FileText, Mail, Phone, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, CheckCircle2, Lock, XCircle, FileText, Mail, Phone, ExternalLink, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { formatIndianCurrency } from '@/lib/format';
@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 const Negotiation = () => {
   const { dealId } = useParams();
   const navigate = useNavigate();
-  const { user, deals, updateDealStatus, updateDealTerms, influencerProfiles, campaigns } = useStore();
+  const { user, deals, updateDealStatus, updateDealTerms, influencerProfiles, campaigns, dealMessages, fetchDealMessages, sendDealMessage, subscribeToDealMessages, unsubscribeFromDealMessages } = useStore();
 
   const deal = deals.find((d) => d.id === dealId);
 
@@ -24,6 +24,30 @@ const Negotiation = () => {
   const [posts, setPosts] = useState(String(deal?.terms?.posts || 0));
   const [totalAmount, setTotalAmount] = useState(String(deal?.terms?.totalAmount || 0));
   const [termsNotes, setTermsNotes] = useState(deal?.terms?.termsNotes || '');
+
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (dealId) {
+      fetchDealMessages(dealId);
+      subscribeToDealMessages(dealId);
+    }
+    return () => {
+      unsubscribeFromDealMessages();
+    };
+  }, [dealId, fetchDealMessages, subscribeToDealMessages, unsubscribeFromDealMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [dealMessages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !deal) return;
+    await sendDealMessage(deal.id, newMessage);
+    setNewMessage('');
+  };
 
   if (!deal || !user) { navigate('/dashboard'); return null; }
 
@@ -66,44 +90,62 @@ const Negotiation = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container flex-1 py-8 max-w-4xl">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
+      <div className="container flex-1 py-10 max-w-5xl">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to Dashboard
         </button>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Deal Terms / Negotiation Form */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card border rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="h-5 w-5 text-primary" />
-                <h2 className="font-bold text-lg">Deal Terms</h2>
-              </div>
-              <p className="text-xs text-muted-foreground mb-5">{deal.campaignTitle} — {deal.influencerName} ↔ {deal.brandName}</p>
-
-              {deal.status === 'negotiating' || deal.status === 'requested' ? (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold">Deliverables Count</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div><Label className="text-xs">Stories</Label><Input type="number" min="0" value={stories} onChange={e => setStories(e.target.value)} /></div>
-                    <div><Label className="text-xs">Short Videos</Label><Input type="number" min="0" value={shortVideos} onChange={e => setShortVideos(e.target.value)} /></div>
-                    <div><Label className="text-xs">Long Videos</Label><Input type="number" min="0" value={longVideos} onChange={e => setLongVideos(e.target.value)} /></div>
-                    <div><Label className="text-xs">Posts</Label><Input type="number" min="0" value={posts} onChange={e => setPosts(e.target.value)} /></div>
+            <div className="bg-card border rounded-3xl flex flex-col h-[600px] overflow-hidden shadow-sm">
+              <div className="flex flex-col border-b p-5 bg-muted/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <FileText className="h-4 w-4 text-primary" />
                   </div>
-                  <div>
-                    <Label className="text-xs">Total Amount (₹)</Label>
-                    <Input type="number" min="0" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="Enter total amount" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Terms & Notes</Label>
-                    <Textarea value={termsNotes} onChange={e => setTermsNotes(e.target.value)} placeholder="Content requirements, posting schedule, brand guidelines..." rows={4} />
-                  </div>
-                  <Button className="rounded-pill" onClick={saveTerms}>Save Terms</Button>
+                  <h2 className="font-semibold text-base">Negotiation Chat</h2>
                 </div>
-              ) : (
-                /* Summary paragraph for locked/approved/etc */
-                <div className="bg-muted rounded-xl p-5">
-                  <p className="text-sm leading-relaxed">{buildSummaryParagraph()}</p>
+                <p className="text-xs text-muted-foreground ml-10">{deal.campaignTitle} — {deal.influencerName} ↔ {deal.brandName}</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-5 bg-muted/10 flex flex-col">
+                {dealMessages.length === 0 ? (
+                  <div className="h-full flex-1 flex items-center justify-center">
+                    <p className="text-center text-muted-foreground text-sm bg-background/50 px-4 py-2 rounded-full border">No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  <div className="mt-auto space-y-4">
+                    {dealMessages.map((msg) => {
+                      const isOwn = msg.senderId === user.id;
+                      const senderName = isOwn ? 'You' : (user.role === 'brand' ? deal.influencerName : deal.brandName);
+                      return (
+                        <div key={msg.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                          <span className="text-[10px] text-muted-foreground mb-1 px-1">{senderName}</span>
+                          <div className={`max-w-[75%] px-4 py-3 text-sm shadow-sm ${isOwn ? 'bg-primary text-primary-foreground rounded-2xl rounded-tr-sm' : 'bg-card text-card-foreground border rounded-2xl rounded-tl-sm'}`}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+
+              {(deal.status === 'negotiating' || deal.status === 'requested') && (
+                <div className="p-4 border-t bg-background">
+                  <form onSubmit={handleSendMessage} className="flex gap-3">
+                    <Input 
+                      value={newMessage} 
+                      onChange={e => setNewMessage(e.target.value)} 
+                      placeholder="Type a message..." 
+                      className="flex-1 rounded-full bg-muted/50 border-transparent focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent"
+                    />
+                    <Button type="submit" size="icon" className="rounded-full shrink-0 h-10 w-10 shadow-sm transition-transform active:scale-95" disabled={!newMessage.trim()}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
                 </div>
               )}
             </div>
@@ -137,23 +179,64 @@ const Negotiation = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            <div className="bg-card border rounded-2xl p-5">
-              <h3 className="font-bold mb-3">Deal Summary</h3>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between"><dt className="text-muted-foreground">Status</dt><dd className="font-medium capitalize">{deal.status}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Amount</dt><dd className="font-medium">{deal.terms?.totalAmount ? formatIndianCurrency(deal.terms.totalAmount) : 'TBD'}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Creator</dt><dd className="font-medium">{deal.influencerName}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Brand</dt><dd className="font-medium">{deal.brandName}</dd></div>
-              </dl>
-              {!isApproved && (
-                <p className="text-xs text-muted-foreground mt-3 p-2 bg-muted rounded-lg">
-                  Contact details will be shared after the deal is approved.
-                </p>
-              )}
+          <div className="h-[600px] flex flex-col space-y-4">
+            <div className="bg-card border rounded-3xl p-6 shadow-sm flex-1 flex flex-col overflow-hidden min-h-0">
+              <h3 className="font-semibold text-base mb-4 shrink-0">Deal Summary</h3>
+              <div className="space-y-3 text-sm mb-5 shrink-0">
+                <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Status</span><span className="font-medium capitalize bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs">{deal.status}</span></div>
+                <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Amount</span><span className="font-semibold text-base">{deal.terms?.totalAmount ? formatIndianCurrency(deal.terms.totalAmount) : 'TBD'}</span></div>
+                <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Creator</span><span className="font-medium truncate max-w-[140px] text-right" title={deal.influencerName}>{deal.influencerName}</span></div>
+                <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Brand</span><span className="font-medium truncate max-w-[140px] text-right" title={deal.brandName}>{deal.brandName}</span></div>
+              </div>
+
+              <div className="h-px bg-border/60 mb-5 shrink-0" />
+
+              <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                {deal.status === 'negotiating' || deal.status === 'requested' ? (
+                  <div className="space-y-5 pb-4">
+                    <h4 className="text-sm font-semibold">Deliverables & Terms</h4>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5"><Label className="text-[11px] text-muted-foreground font-medium">Stories</Label><Input type="number" min="0" value={stories} onChange={e => setStories(e.target.value)} className="h-9 text-sm px-3 bg-muted/30 focus-visible:bg-background" /></div>
+                        <div className="space-y-1.5"><Label className="text-[11px] text-muted-foreground font-medium">Short Vids</Label><Input type="number" min="0" value={shortVideos} onChange={e => setShortVideos(e.target.value)} className="h-9 text-sm px-3 bg-muted/30 focus-visible:bg-background" /></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5"><Label className="text-[11px] text-muted-foreground font-medium">Long Vids</Label><Input type="number" min="0" value={longVideos} onChange={e => setLongVideos(e.target.value)} className="h-9 text-sm px-3 bg-muted/30 focus-visible:bg-background" /></div>
+                        <div className="space-y-1.5"><Label className="text-[11px] text-muted-foreground font-medium">Posts</Label><Input type="number" min="0" value={posts} onChange={e => setPosts(e.target.value)} className="h-9 text-sm px-3 bg-muted/30 focus-visible:bg-background" /></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[11px] text-muted-foreground font-medium">Total Amount (₹)</Label>
+                      <Input type="number" min="0" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="0" className="h-9 text-sm px-3 bg-muted/30 focus-visible:bg-background" />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label className="text-[11px] text-muted-foreground font-medium">Notes & Requirements</Label>
+                      <Textarea value={termsNotes} onChange={e => setTermsNotes(e.target.value)} placeholder="Guidelines, schedules..." outline-none rows={3} className="text-sm resize-none px-3 py-2 bg-muted/30 focus-visible:bg-background" />
+                    </div>
+                    
+                    <Button className="w-full text-sm h-10 rounded-xl font-semibold mt-2 shrink-0 mb-4" onClick={saveTerms}>Update Terms</Button>
+                  </div>
+                ) : (
+                  <div className="bg-muted/30 border rounded-2xl p-4">
+                    <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Agreed Terms
+                    </h4>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">{buildSummaryParagraph()}</p>
+                  </div>
+                )}
+
+                {!isApproved && (
+                  <p className="text-[11px] text-muted-foreground mt-2 flex items-center justify-center gap-1.5 p-3 bg-muted/30 border rounded-xl">
+                    <Lock className="h-3 w-3" /> Details shared after approval
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 shrink-0">
               {(deal.status === 'negotiating') && (
                 <>
                   <Button className="w-full rounded-pill" onClick={() => updateDealStatus(deal.id, 'locked')}>
