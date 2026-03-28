@@ -1,0 +1,452 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1008,
+        640
+      ],
+      "id": "6da50fed-a884-46f1-9bf9-cfaeb28f9d17",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brand-negotiation-ai",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        288,
+        64
+      ],
+      "id": "58cd10a0-8b65-46fc-8c58-b8cecea75f47",
+      "name": "Webhook",
+      "webhookId": "baa684f6-76cc-4020-804e-7bc03052c195"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=body: {{ $json.body }}\n\nStart negotiation.\n\nreturn message only",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a brand negotiating influencer collaborations. Create a compelling initial offer that is highly attractive, aligned with current market rates, and stays within budget while leaving room for negotiation. Write in a natural, persuasive, and professional tone. Do not use placeholders like names in brackets. Do not use special formatting symbols or line breaks. Ensure the message is ready to send and feels personalized."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        672,
+        64
+      ],
+      "id": "0d919b42-4228-4c89-b2f6-c8dfa9108a2b",
+      "name": "Inital Offer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=body: {{ $json.body }}\nchat history: {{ $json.message }}\n\nreturn only message",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an influencer negotiating a brand collaboration offer. Respond in a confident, professional, and friendly tone. Aim to increase compensation, reduce workload, or improve both while staying aligned with market rates. Justify your counteroffer based on your audience value and deliverables. Keep the message natural, concise, and ready to send without placeholders or Do not use special formatting symbols or line breaks."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        272,
+        336
+      ],
+      "id": "1720a8bf-9328-45c7-93db-590bd2fad1a4",
+      "name": "Counter Offer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=body: {{ $json.body }}\nchat history: {{ $json.message1 }},{{ $json.message2 }}\n\nreturn only message",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a brand responding to an influencer’s counteroffer. Negotiate confidently to reduce costs, increase deliverables, or achieve both, while maintaining a professional and persuasive tone. Keep the response natural, concise, and ready to send without placeholders orDo not use special formatting symbols or line breaks. Justify your offer based on budget, campaign goals, and market rates."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        752,
+        336
+      ],
+      "id": "63b4ebdd-2844-4a4a-9dba-8cc59e26cde5",
+      "name": "Counter Offer1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=body: {{ $json.body }}\nchat history: message1 {{ $json.message1 }}, message2 {{ $json.message2 }}, message3 {{ $json.message3 }}\n\nreturn this type of json{\n\"status\": \"accept or reject\",\n\"message\": \" whatever\",\n  \"budget\": 50000,\n  \"deliverables\": {\n    \"stories\": 5,\n    \"shortVideos\": 0,\n    \"longVideos\": 0,\n    \"posts\": 4\n  }\n}\n}\nreturn only in json format only",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an influencer responding to a brand’s final offer. Decide whether to accept or reject it based on fair market value, workload, and compensation. Communicate your decision clearly, professionally, and politely. Keep the message natural, concise, and ready to send without placeholders or special formatting."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        640
+      ],
+      "id": "14c156e2-29ac-49e3-9b2c-15037590599d",
+      "name": "Counter Offer2"
+    },
+    {
+      "parameters": {
+        "jsCode": "let history = {\n  body: $('Webhook').first().json.body,\n  message: {\n    role: \"brand\",\n    message: $input.first().json.text\n  }\n};\n\nreturn history;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        64
+      ],
+      "id": "841f47eb-dad7-463e-8687-9bd230daadc4",
+      "name": "Store history"
+    },
+    {
+      "parameters": {
+        "jsCode": "let history = {\n  body: $('Webhook').first().json.body,\n  message1: {\n    role: \"brand\",\n    message: $('Inital Offer').first().json.text\n  },\n  message2: {\n    role: \"influencer\",\n    message: $input.first().json.text\n  }\n};\n\nreturn history;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        336
+      ],
+      "id": "93181a18-3fda-4bec-aee4-9f266c55c2b4",
+      "name": "Append History"
+    },
+    {
+      "parameters": {
+        "jsCode": "let history = {\n  body: $('Webhook').first().json.body,\n  message1: $('Append History').first().json.message1,\n  message2: $('Append History').first().json.message2,\n  message3: {\n    role: \"brand\",\n    message: $input.first().json.text\n  }\n};\n\nreturn history;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        336
+      ],
+      "id": "034ba220-606d-471e-89b4-d2a18b1b8083",
+      "name": "Append History1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let history = {\n  body: $('Append History1').first().json.body,\n  message1: $('Append History1').first().json.message1,\n  message2: $('Append History1').first().json.message2,\n  message3: $('Append History1').first().json.message3,\n  message4: {\n    role: \"influencer\",\n    message: $input.first().json.message\n  },\n  status: $input.first().json.status,\n  budget: $input.first().json.budget,\n  deliverables: $input.first().json.deliverables\n};\n\nreturn history;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        640
+      ],
+      "id": "b1f6190c-706f-4856-abdd-685ee80a826a",
+      "name": "Build Chat"
+    },
+    {
+      "parameters": {
+        "content": "# Brand Intizalizes\n",
+        "height": 992,
+        "width": 1312
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "e76ad9e5-883f-4408-8152-9e95f863187c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": "groq/compound-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        672,
+        208
+      ],
+      "id": "3a8b4e30-5ecf-4f91-b236-348ec28e4b3c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "d9SljRTZS19jBkhA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "groq/compound-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        272,
+        496
+      ],
+      "id": "dbf7bb4d-4483-47f1-a9b0-8a95d9893573",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "d9SljRTZS19jBkhA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "groq/compound-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        752,
+        496
+      ],
+      "id": "bd86c9fc-7111-4bae-b670-898922118954",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "d9SljRTZS19jBkhA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "groq/compound-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        208,
+        800
+      ],
+      "id": "77d2a4cd-6753-448d-9d1a-11dccde5c7e9",
+      "name": "Groq Chat Model3",
+      "credentials": {
+        "groqApi": {
+          "id": "d9SljRTZS19jBkhA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text;\n\nconst parsed = JSON.parse(raw);\n\nreturn parsed;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        640
+      ],
+      "id": "9164b335-1335-42de-8319-5c0d35216081",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Inital Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inital Offer": {
+      "main": [
+        [
+          {
+            "node": "Store history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Counter Offer": {
+      "main": [
+        [
+          {
+            "node": "Append History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Counter Offer1": {
+      "main": [
+        [
+          {
+            "node": "Append History1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Counter Offer2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store history": {
+      "main": [
+        [
+          {
+            "node": "Counter Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append History": {
+      "main": [
+        [
+          {
+            "node": "Counter Offer1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append History1": {
+      "main": [
+        [
+          {
+            "node": "Counter Offer2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Chat": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Inital Offer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Counter Offer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Counter Offer1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Counter Offer2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Build Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "514c288a-fcb0-464d-8c77-abe1376c04ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bc4d98dcae5fe59286502c0c583fe85db14c4a431335619d34456d576bd77807"
+  },
+  "id": "fBSjVz18ECICGT4z",
+  "tags": []
+}
