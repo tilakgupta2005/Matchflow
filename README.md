@@ -103,4 +103,5 @@ This project is licensed under the MIT License. Feel free to use and modify it a
 ## 👨‍💻 Author / Developer
 
 **[Tilak Gupta](https://tilak-dev.vercel.app)**
-- Email: [tilakgupta2005@gmail.com](mailto:tilakgupta2005@gmail.com)
+
+[tilakgupta2005@gmail.com](mailto:tilakgupta2005@gmail.com)
