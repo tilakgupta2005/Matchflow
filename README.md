@@ -96,7 +96,7 @@ This generates a `/dist` directory that can be safely hosted on standard CDN pla
 
 ## 📄 License
 
-This project is licensed under the MIT License. Feel free to use and modify it as per your needs.
+This project is licensed under the **MIT License**. Feel free to use and modify it as per your needs, provided that you give credit to the original developer.
 
 ---
 
