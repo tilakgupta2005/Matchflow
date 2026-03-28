@@ -65,6 +65,8 @@ export interface DealTerms {
   posts: number;
   totalAmount: number;
   termsNotes: string;
+  brandApproved?: boolean;
+  influencerApproved?: boolean;
 }
 
 export interface Deal {
@@ -125,6 +127,8 @@ interface AppState {
   addDeal: (d: Deal) => Promise<void>;
   updateDealStatus: (dealId: string, status: DealStatus) => Promise<void>;
   updateDealTerms: (dealId: string, terms: DealTerms) => Promise<void>;
+  approveDeal: (dealId: string) => Promise<void>;
+  declineDeal: (dealId: string) => Promise<void>;
   sendDealMessage: (dealId: string, content: string) => Promise<void>;
   runAiNegotiation: (deal: Deal) => Promise<void>;
   updateCampaign: (id: string, data: Partial<Campaign>) => Promise<void>;
@@ -180,13 +184,19 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   subscribeToDealMessages: (dealId) => {
-    const channel = supabase.channel(`public:deal_messages:${dealId}`)
+    const channel = supabase.channel(`public:deal_updates:${dealId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'deal_messages', filter: `dealId=eq.${dealId}` }, (payload) => {
         const newMsg = payload.new as DealMessage;
         set((s) => {
           if (s.dealMessages.some(m => m.id === newMsg.id)) return s;
           return { dealMessages: [...s.dealMessages, newMsg] };
         });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'deals', filter: `id=eq.${dealId}` }, (payload) => {
+        const updatedDeal = payload.new as Deal;
+        set((s) => ({
+          deals: s.deals.map((d) => d.id === updatedDeal.id ? { ...d, ...updatedDeal } : d)
+        }));
       })
       .subscribe();
     
@@ -241,8 +251,42 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   updateDealTerms: async (dealId, terms) => {
-    const { error } = await supabase.from('deals').update({ terms, amount: terms.totalAmount }).eq('id', dealId);
-    if (!error) set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms, amount: terms.totalAmount } : d) }));
+    const newTerms = { ...terms, brandApproved: false, influencerApproved: false };
+    const { error } = await supabase.from('deals').update({ terms: newTerms, amount: newTerms.totalAmount }).eq('id', dealId);
+    if (!error) set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms: newTerms, amount: newTerms.totalAmount } : d) }));
+  },
+
+  approveDeal: async (dealId) => {
+    const state = get();
+    const deal = state.deals.find(d => d.id === dealId);
+    if (!deal || !deal.terms || !state.user) return;
+
+    let newTerms = { ...deal.terms };
+    if (state.user.role === 'brand') newTerms.brandApproved = true;
+    if (state.user.role === 'influencer') newTerms.influencerApproved = true;
+
+    const bothApproved = newTerms.brandApproved && newTerms.influencerApproved;
+    const newStatus = bothApproved ? 'approved' : 'locked';
+
+    const { error } = await supabase.from('deals').update({ terms: newTerms, status: newStatus }).eq('id', dealId);
+    if (!error) {
+      set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms: newTerms, status: newStatus } : d) }));
+      if (bothApproved) {
+         state.addNotification(`Deal approved for ${deal.campaignTitle}`, deal.influencerId !== state.user.id ? deal.influencerId : deal.brandId);
+      }
+    }
+  },
+
+  declineDeal: async (dealId) => {
+    const state = get();
+    const deal = state.deals.find(d => d.id === dealId);
+    if (!deal || !deal.terms) return;
+    
+    let newTerms = { ...deal.terms, brandApproved: false, influencerApproved: false };
+    const { error } = await supabase.from('deals').update({ terms: newTerms, status: 'negotiating' }).eq('id', dealId);
+    if (!error) {
+       set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms: newTerms, status: 'negotiating' } : d) }));
+    }
   },
 
   runAiNegotiation: async (deal) => {

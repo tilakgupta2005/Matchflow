@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { formatIndianCurrency, formatFollowers } from '@/lib/format';
+import { ensureAbsoluteUrl } from '@/lib/utils';
 
 const PAGE_SIZE = 20;
 
@@ -118,7 +119,7 @@ const Discovery = () => {
                       {/* Social links */}
                       <div className="flex flex-wrap gap-2 mb-4 min-h-[24px]">
                         {inf.socialLinks.length > 0 && inf.socialLinks.slice(0, 3).map((l, i) => (
-                          <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-[120px]" title={l.platform || 'Link'}>
+                          <a key={i} href={ensureAbsoluteUrl(l.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-[120px]" title={l.platform || 'Link'}>
                             <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{l.platform || 'Link'}</span>
                           </a>
                         ))}
@@ -171,7 +172,7 @@ const Discovery = () => {
                       {c.deliverables.length > 3 && <span className="text-xs bg-muted rounded-lg px-2 py-1 shrink-0">+{c.deliverables.length - 3}</span>}
                     </div>
                     {c.productLink && (
-                      <a href={c.productLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-3 truncate max-w-full">
+                      <a href={ensureAbsoluteUrl(c.productLink)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-3 truncate max-w-full">
                         <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">Product Link</span>
                       </a>
                     )}
@@ -279,7 +280,7 @@ const Discovery = () => {
                         <h4 className="font-semibold text-sm mb-2">Platforms</h4>
                         <div className="flex flex-wrap gap-2">
                           {inf.socialLinks.map((l, i) => (
-                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
+                            <a key={i} href={ensureAbsoluteUrl(l.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
                               <ExternalLink className="h-4 w-4 flex-shrink-0" /> <span className="truncate max-w-[150px]">{l.platform || 'Link'}</span>
                             </a>
                           ))}
@@ -353,7 +354,7 @@ const Discovery = () => {
                     {c.productLink && (
                       <div>
                         <Label className="text-xs text-muted-foreground uppercase tracking-wider">Product Link</Label>
-                        <a href={c.productLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline mt-1 break-all">
+                        <a href={ensureAbsoluteUrl(c.productLink)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline mt-1 break-all">
                           <ExternalLink className="h-4 w-4 flex-shrink-0" /> {c.productLink}
                         </a>
                       </div>

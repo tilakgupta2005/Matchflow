@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Users, TrendingUp, Shield, Star, Zap } from 'lucide-react';
+import { useStore } from '@/store/useStore';
+import { ArrowRight, Sparkles, Users, TrendingUp, Shield, Star, StarHalf, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import heroImage from '@/assets/hero-illustration.jpg';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const stats = [
-  { value: '10K+', label: 'Active Creators' },
-  { value: '2.5K', label: 'Brand Partners' },
-  { value: '₹10Cr+', label: 'Deals Closed' },
+  { value: '1K+', label: 'Active Creators' },
+  { value: '500+', label: 'Brand Partners' },
+  { value: '₹1 Lakh+', label: 'Deals Closed' },
   { value: '98%', label: 'Satisfaction Rate' },
 ];
 
@@ -19,12 +20,14 @@ const services = [
 ];
 
 const testimonials = [
-  { name: 'Emma Rodriguez', role: 'Lifestyle Influencer', quote: 'Matchflow helped me land 3 brand deals in my first week. The AI negotiation saved me hours!', avatar: '🧑‍🎨' },
-  { name: 'Jake Chen', role: 'Marketing Director, NovaTech', quote: 'We found our perfect brand ambassadors in minutes instead of weeks. Game changer.', avatar: '👨‍💼' },
-  { name: 'Priya Sharma', role: 'Food Creator', quote: 'The platform handles all the back-and-forth so I can focus on creating content.', avatar: '👩‍🍳' },
+  { name: 'Emma Rodriguez', role: 'Lifestyle Influencer', quote: 'Matchflow helped me land 3 brand deals in my first week. The AI negotiation saved me hours!', avatar: '🧑‍🎨', rating: 4.5 },
+  { name: 'Jake Chen', role: 'Marketing Director, NovaTech', quote: 'We found our perfect brand ambassadors in minutes instead of weeks. Game changer.', avatar: '👨‍💼', rating: 4 },
+  { name: 'Priya Sharma', role: 'Food Creator', quote: 'The platform handles all the back-and-forth so I can focus on creating content.', avatar: '👩‍🍳', rating: 5 },
 ];
 
 const Landing = () => {
+  const user = useStore((s) => s.user);
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -126,7 +129,16 @@ const Landing = () => {
                   </div>
                 </div>
                 <div className="flex gap-0.5 mb-3">
-                  {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-primary text-primary" />)}
+                  {[...Array(5)].map((_, j) => {
+                    const rating = t.rating || 5;
+                    if (j < Math.floor(rating)) {
+                      return <Star key={j} className="h-4 w-4 fill-primary text-primary" />;
+                    } else if (j < rating) {
+                      return <StarHalf key={j} className="h-4 w-4 fill-primary text-primary" />;
+                    } else {
+                      return <Star key={j} className="h-4 w-4 text-primary" />;
+                    }
+                  })}
                 </div>
                 <p className="text-sm text-muted-foreground italic">"{t.quote}"</p>
               </div>
@@ -136,20 +148,22 @@ const Landing = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-primary/10">
-        <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Find Your Match?</h2>
-          <p className="text-muted-foreground mb-8 max-w-lg mx-auto">Join thousands of creators and brands already growing together on Matchflow.</p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Link to="/auth?mode=signup&role=influencer">
-              <Button size="lg" className="rounded-pill px-8">I'm a Creator <Users className="ml-2 h-5 w-5" /></Button>
-            </Link>
-            <Link to="/auth?mode=signup&role=brand">
-              <Button variant="outline" size="lg" className="rounded-pill px-8">I'm a Brand <ArrowRight className="ml-2 h-5 w-5" /></Button>
-            </Link>
+      {!user && (
+        <section className="py-20 bg-primary/10">
+          <div className="container text-center">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Find Your Match?</h2>
+            <p className="text-muted-foreground mb-8 max-w-lg mx-auto">Join thousands of creators and brands already growing together on Matchflow.</p>
+            <div className="flex justify-center gap-4 flex-wrap">
+              <Link to="/auth?mode=signup&role=influencer">
+                <Button size="lg" className="rounded-pill px-8">I'm a Creator <Users className="ml-2 h-5 w-5" /></Button>
+              </Link>
+              <Link to="/auth?mode=signup&role=brand">
+                <Button variant="outline" size="lg" className="rounded-pill px-8">I'm a Brand <ArrowRight className="ml-2 h-5 w-5" /></Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer />
     </div>

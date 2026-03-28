@@ -10,11 +10,12 @@ import Footer from '@/components/Footer';
 import { formatIndianCurrency } from '@/lib/format';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
+import { ensureAbsoluteUrl } from '@/lib/utils';
 
 const Negotiation = () => {
   const { dealId } = useParams();
   const navigate = useNavigate();
-  const { user, deals, updateDealStatus, updateDealTerms, influencerProfiles, campaigns, dealMessages, fetchDealMessages, sendDealMessage, subscribeToDealMessages, unsubscribeFromDealMessages } = useStore();
+  const { user, deals, updateDealStatus, updateDealTerms, influencerProfiles, campaigns, dealMessages, fetchDealMessages, sendDealMessage, subscribeToDealMessages, unsubscribeFromDealMessages, approveDeal, declineDeal } = useStore();
 
   const deal = deals.find((d) => d.id === dealId);
 
@@ -41,6 +42,17 @@ const Negotiation = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [dealMessages]);
+
+  useEffect(() => {
+    if (deal?.terms) {
+      setStories((prev) => prev !== String(deal.terms?.stories || 0) ? String(deal.terms?.stories || 0) : prev);
+      setShortVideos((prev) => prev !== String(deal.terms?.shortVideos || 0) ? String(deal.terms?.shortVideos || 0) : prev);
+      setLongVideos((prev) => prev !== String(deal.terms?.longVideos || 0) ? String(deal.terms?.longVideos || 0) : prev);
+      setPosts((prev) => prev !== String(deal.terms?.posts || 0) ? String(deal.terms?.posts || 0) : prev);
+      setTotalAmount((prev) => prev !== String(deal.terms?.totalAmount || 0) ? String(deal.terms?.totalAmount || 0) : prev);
+      setTermsNotes((prev) => prev !== (deal.terms?.termsNotes || '') ? (deal.terms?.termsNotes || '') : prev);
+    }
+  }, [deal?.terms]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +84,7 @@ const Negotiation = () => {
   };
 
   const isApproved = deal.status === 'approved';
+  const hasApproved = (user.role === 'brand' && deal.terms?.brandApproved) || (user.role === 'influencer' && deal.terms?.influencerApproved);
 
   const buildSummaryParagraph = () => {
     const t = deal.terms;
@@ -153,7 +166,7 @@ const Negotiation = () => {
             {/* Contact details - shown only when approved */}
             {isApproved && (
               <div className="bg-card border rounded-2xl p-6">
-                <h3 className="font-bold mb-4 flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> Contact Details (Shared)</h3>
+                <h3 className="font-bold mb-4 flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> Contact Details</h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {influencerProfile && (
                     <div className="space-y-2">
@@ -161,7 +174,7 @@ const Negotiation = () => {
                       <div className="flex items-center gap-2 text-sm"><Mail className="h-3 w-3" /> {influencerProfile.contactEmail}</div>
                       <div className="flex items-center gap-2 text-sm"><Phone className="h-3 w-3" /> {influencerProfile.contactPhone}</div>
                       {influencerProfile.socialLinks.map((l, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm"><ExternalLink className="h-3 w-3" /> <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{l.platform || l.url}</a></div>
+                        <div key={i} className="flex items-center gap-2 text-sm"><ExternalLink className="h-3 w-3" /> <a href={ensureAbsoluteUrl(l.url)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{l.platform || l.url}</a></div>
                       ))}
                     </div>
                   )}
@@ -170,7 +183,7 @@ const Negotiation = () => {
                       <h4 className="text-sm font-semibold">{deal.brandName}</h4>
                       {campaign.contactEmail && <div className="flex items-center gap-2 text-sm"><Mail className="h-3 w-3" /> {campaign.contactEmail}</div>}
                       {campaign.contactPhone && <div className="flex items-center gap-2 text-sm"><Phone className="h-3 w-3" /> {campaign.contactPhone}</div>}
-                      {campaign.productLink && <div className="flex items-center gap-2 text-sm"><ExternalLink className="h-3 w-3" /> <a href={campaign.productLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{campaign.productLink}</a></div>}
+                      {campaign.productLink && <div className="flex items-center gap-2 text-sm"><ExternalLink className="h-3 w-3" /> <a href={ensureAbsoluteUrl(campaign.productLink)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{campaign.productLink}</a></div>}
                     </div>
                   )}
                 </div>
@@ -188,6 +201,21 @@ const Negotiation = () => {
                 <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Creator</span><span className="font-medium truncate max-w-[140px] text-right" title={deal.influencerName}>{deal.influencerName}</span></div>
                 <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Brand</span><span className="font-medium truncate max-w-[140px] text-right" title={deal.brandName}>{deal.brandName}</span></div>
               </div>
+
+              {deal.status === 'locked' && (deal.terms?.brandApproved || deal.terms?.influencerApproved) && (
+                <div className="space-y-2 mb-5 shrink-0">
+                  {deal.terms?.brandApproved && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-green-700 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-200">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Brand has approved terms
+                    </div>
+                  )}
+                  {deal.terms?.influencerApproved && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-green-700 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-200">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Creator has approved terms
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="h-px bg-border/60 mb-5 shrink-0" />
 
@@ -248,9 +276,14 @@ const Negotiation = () => {
                 </>
               )}
               {deal.status === 'locked' && (
-                <Button className="w-full rounded-pill" onClick={() => updateDealStatus(deal.id, 'approved')}>
-                  <CheckCircle2 className="mr-2 h-4 w-4" /> Approve Deal
-                </Button>
+                <>
+                  <Button className="w-full rounded-pill" onClick={() => approveDeal(deal.id)} disabled={hasApproved}>
+                    <CheckCircle2 className="mr-2 h-4 w-4" /> {hasApproved ? 'Waiting on partner...' : 'Approve Terms'}
+                  </Button>
+                  <Button variant="destructive" className="w-full rounded-pill" onClick={() => declineDeal(deal.id)}>
+                    <XCircle className="mr-2 h-4 w-4" /> Decline Terms
+                  </Button>
+                </>
               )}
               {deal.status === 'requested' && (
                 <>
