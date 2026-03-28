@@ -1,0 +1,146 @@
+so whenever the influncer or brand clicks on the apply or request for the deal
+then there will be an api call
+
+api http://localhost:5678/webhook/brand-negotiation-ai
+body of api will be like this
+{
+    "influencer": {
+  "userId": "inf_123456",
+  "niches": ["fashion", "lifestyle", "travel"],
+  "followers": 120000,
+  "engagementRate": 4.5,
+  "priceStory": { "min": 50, "max": 100 },
+  "priceShortVideo": { "min": 200, "max": 400 },
+  "priceLongVideo": { "min": 500, "max": 1000 },
+  "pricePost": { "min": 150, "max": 300 },
+  "bio": "Lifestyle and fashion influencer sharing daily outfit inspiration and travel adventures.",
+  "platforms": ["Instagram", "TikTok", "YouTube"],
+  "contactEmail": "influencer@example.com",
+  "contactPhone": "+1234567890",
+  "socialLinks": [
+    { "platform": "Instagram", "url": "https://instagram.com/influencer" },
+    { "platform": "TikTok", "url": "https://tiktok.com/@influencer" },
+    { "platform": "YouTube", "url": "https://youtube.com/influencer" }
+  ],
+  "country": "USA",
+  "state": "California",
+  "city": "Los Angeles"
+},
+"campaign": {
+  "id": "camp_987654",
+  "brandId": "brand_001",
+  "brandName": "Trendy Clothing Co.",
+  "title": "Summer Collection 2026 Launch",
+  "description": "Looking for influencers to promote our new summer line with engaging social content.",
+  "budget": 5000,
+  "category": "Fashion",
+  "deliverables": ["3 Instagram Stories", "1 TikTok Video", "1 Instagram Post"],
+  "status": "active",
+  "contactEmail": "marketing@trendyco.com",
+  "contactPhone": "+19876543210",
+  "productLink": "https://trendyco.com/summer2026",
+  "country": "USA",
+  "state": "California",
+  "city": "Los Angeles"
+}
+}
+
+post method for api and its a webhook
+
+
+and its response will be like this
+
+[
+  {
+    "body": {
+      "influencer": {
+        "niches": [
+          "fashion",
+          "lifestyle",
+          "beauty"
+        ],
+        "followers": 250000,
+        "engagementRate": 4.8,
+        "priceStory": {
+          "min": 5000,
+          "max": 10000
+        },
+        "priceShortVideo": {
+          "min": 15000,
+          "max": 30000
+        },
+        "priceLongVideo": {
+          "min": 30000,
+          "max": 60000
+        },
+        "pricePost": {
+          "min": 10000,
+          "max": 20000
+        },
+        "bio": "Fashion & lifestyle influencer sharing daily outfit inspiration and beauty tips.",
+        "platforms": [
+          "Instagram",
+          "YouTube"
+        ],
+        "socialLinks": [
+          {
+            "platform": "Instagram",
+            "url": "https://instagram.com/influencer"
+          },
+          {
+            "platform": "YouTube",
+            "url": "https://youtube.com/influencer"
+          }
+        ],
+        "country": "India",
+        "state": "Uttar Pradesh",
+        "city": "Lucknow"
+      },
+      "campaign": {
+        "brandName": "GlowBeauty",
+        "title": "Summer Skincare Campaign",
+        "description": "Promote our new sunscreen and skincare range for summer.",
+        "budget": 200000,
+        "category": "Beauty",
+        "deliverables": [
+          "2 Instagram posts",
+          "3 stories",
+          "1 reel"
+        ],
+        "productLink": "https://glowbeauty.com/summer-collection",
+        "country": "India",
+        "state": "Maharashtra",
+        "city": "Mumbai"
+      }
+    },
+    "message1": {
+      "role": "brand",
+      "message": "Hi, we’ve been following your amazing content and would love to partner with you on our upcoming summer collection, offering $2,200 per Instagram post plus a $300 performance bonus tied to engagement, plus product gifting and early access to future drops, which we feel matches current market rates while giving us flexibility to adjust details together—let me know your thoughts and any ideas you have for making this collaboration a success"
+    },
+    "message2": {
+      "role": "influencer",
+      "message": "Hi [Brand], thank you for the proposal – I’m excited about the potential partnership. Based on my audience of 250k engaged followers (average engagement rate 6.8% and a proven ROI of 3.2x on similar campaigns), I propose a fee of $12,000 for three Instagram posts, one Reel, and a dedicated story series, which aligns with market rates for this reach, and to ensure high‑quality content I’d like to streamline the deliverables to two posts and one Reel so I can focus on creating authentic, high‑impact pieces that resonate with my community. Let me know if this works for you – I’m confident we can achieve great results together and look forward to your thoughts."
+    },
+    "message3": {
+      "role": "brand",
+      "message": "Thank you for your proposal; we’re excited about partnering and believe the campaign can deliver strong results, but our current quarterly budget is $12,000 which is below the $15,000 rate you quoted, so we can move forward if we adjust the fee to $12,000 and expand the deliverables to include two Instagram posts, a TikTok video, and a story series, aligning with our goals and current market benchmarks."
+    },
+    "message4": {
+      "role": "influencer",
+      "message": "Thank you for the offer. I’m happy to confirm my participation and look forward to delivering the 5 stories and 4 posts as outlined."
+    },
+    "status": "accept", //reject
+    "budget": 50000,
+    "deliverables": {
+      "stories": 5,
+      "shortVideos": 0,
+      "longVideos": 0,
+      "posts": 4
+    }
+  }
+]
+
+
+so the message will be shown in the chat box in the deal section
+and if status is accepted then lock the deal and if reject then reject the deal
+also set the deliverables and budget in the deal

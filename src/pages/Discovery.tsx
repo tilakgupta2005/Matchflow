@@ -12,18 +12,18 @@ import { formatIndianCurrency, formatFollowers } from '@/lib/format';
 const PAGE_SIZE = 20;
 
 const Discovery = () => {
-  const { user, influencerProfiles, campaigns, deals, addDeal, addNotification, hasDealForCampaign } = useStore();
+  const { user, influencerProfiles, campaigns, deals, addDeal, addNotification, hasDealForCampaign, runAiNegotiation } = useStore();
   const [infVisible, setInfVisible] = useState(PAGE_SIZE);
   const [campVisible, setCampVisible] = useState(PAGE_SIZE);
   const [viewInfluencer, setViewInfluencer] = useState<string | null>(null);
   const [viewCampaign, setViewCampaign] = useState<string | null>(null);
 
-  const sendRequest = (type: 'to-influencer' | 'to-brand', targetId: string, targetName: string, campaignId?: string) => {
+  const sendRequest = async (type: 'to-influencer' | 'to-brand', targetId: string, targetName: string, campaignId?: string) => {
     if (campaignId && user && hasDealForCampaign(user.id, campaignId)) {
       toast.error('You already have a request for this campaign.');
       return;
     }
-    addDeal({
+    const newDeal = {
       id: crypto.randomUUID(),
       influencerId: type === 'to-influencer' ? targetId : user?.id || '',
       influencerName: type === 'to-influencer' ? targetName : user?.name || '',
@@ -31,12 +31,16 @@ const Discovery = () => {
       brandName: type === 'to-brand' ? targetName : user?.name || '',
       campaignId: campaignId || '',
       campaignTitle: campaigns.find((c) => c.id === campaignId)?.title || 'Direct Collaboration',
-      status: 'requested',
+      status: 'requested' as const,
       amount: 0,
       createdAt: new Date().toISOString(),
-    });
+    };
+    await addDeal(newDeal);
     addNotification(`New request sent to ${targetName}`);
-    toast.success(`Request sent to ${targetName}!`);
+    toast.success(`Request sent to ${targetName}! Negotiating terms...`);
+    
+    // Trigger AI Negotiation
+    runAiNegotiation(newDeal);
   };
 
   const showInfluencers = !user || user.role === 'brand' || user.role === 'admin';

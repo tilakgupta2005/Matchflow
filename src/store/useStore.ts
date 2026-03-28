@@ -126,6 +126,7 @@ interface AppState {
   updateDealStatus: (dealId: string, status: DealStatus) => Promise<void>;
   updateDealTerms: (dealId: string, terms: DealTerms) => Promise<void>;
   sendDealMessage: (dealId: string, content: string) => Promise<void>;
+  runAiNegotiation: (deal: Deal) => Promise<void>;
   updateCampaign: (id: string, data: Partial<Campaign>) => Promise<void>;
   deleteCampaign: (id: string) => Promise<void>;
   
@@ -242,6 +243,85 @@ export const useStore = create<AppState>((set, get) => ({
   updateDealTerms: async (dealId, terms) => {
     const { error } = await supabase.from('deals').update({ terms, amount: terms.totalAmount }).eq('id', dealId);
     if (!error) set((s) => ({ deals: s.deals.map((d) => d.id === dealId ? { ...d, terms, amount: terms.totalAmount } : d) }));
+  },
+
+  runAiNegotiation: async (deal) => {
+    const state = get();
+    const influencer = state.influencerProfiles.find((p) => p.userId === deal.influencerId);
+    const campaign = state.campaigns.find((c) => c.id === deal.campaignId) || {
+      id: deal.campaignId,
+      brandId: deal.brandId,
+      brandName: deal.brandName,
+      title: deal.campaignTitle,
+      description: 'Direct Collaboration',
+      budget: 0,
+      category: 'General',
+      deliverables: [],
+      status: 'active'
+    };
+
+    if (!influencer) return;
+
+    try {
+      const webhookUrl = import.meta.env.VITE_NEGOTIATION_WEBHOOK_URL || 'http://localhost:5678/webhook/brand-negotiation-ai';
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ influencer, campaign })
+      });
+      const data = await res.json();
+      const aiResponse = Array.isArray(data) ? data[0] : data;
+
+      if (!aiResponse) return;
+
+      const generatedMessages = [];
+      for (let i = 1; i <= 10; i++) {
+        const msgInfo = aiResponse[`message${i}`];
+        if (msgInfo && msgInfo.role && msgInfo.message) {
+          generatedMessages.push({
+            id: crypto.randomUUID(),
+            dealId: deal.id,
+            senderId: msgInfo.role === 'brand' ? deal.brandId : deal.influencerId,
+            content: msgInfo.message,
+            createdAt: new Date(Date.now() + i * 1000).toISOString()
+          });
+        }
+      }
+
+      if (generatedMessages.length > 0) {
+        const { error: msgError } = await supabase.from('deal_messages').insert(generatedMessages);
+        if (!msgError) {
+          set((s) => ({ dealMessages: [...s.dealMessages, ...generatedMessages] }));
+        }
+      }
+
+      const statusStr = String(aiResponse.status || '').trim().toLowerCase();
+      const newStatus = statusStr === 'accept' ? 'locked' : (statusStr === 'reject' ? 'rejected' : 'failed');
+      const terms = {
+        stories: aiResponse.deliverables?.stories || 0,
+        shortVideos: aiResponse.deliverables?.shortVideos || 0,
+        longVideos: aiResponse.deliverables?.longVideos || 0,
+        posts: aiResponse.deliverables?.posts || 0,
+        totalAmount: aiResponse.budget || 0,
+        termsNotes: 'AI Negotiated Terms'
+      };
+
+      const { error: updateError } = await supabase.from('deals').update({
+        terms,
+        amount: terms.totalAmount,
+        status: newStatus
+      }).eq('id', deal.id);
+
+      if (!updateError) {
+        set((s) => ({
+          deals: s.deals.map((d) =>
+            d.id === deal.id ? { ...d, terms, amount: terms.totalAmount, status: newStatus } : d
+          )
+        }));
+      }
+    } catch (err) {
+      console.error('AI Negotiation failed', err);
+    }
   },
 
   sendDealMessage: async (dealId, content) => {
