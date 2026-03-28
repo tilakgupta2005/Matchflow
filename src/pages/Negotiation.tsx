@@ -61,7 +61,7 @@ const Negotiation = () => {
     setNewMessage('');
   };
 
-  if (!deal || !user) { navigate('/dashboard'); return null; }
+  if (!deal || !user) return null;
 
   const influencerProfile = influencerProfiles.find(p => p.userId === deal.influencerId);
   const campaign = campaigns.find(c => c.id === deal.campaignId);
@@ -103,15 +103,15 @@ const Negotiation = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container flex-1 py-10 max-w-5xl">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+      <div className="container flex-1 py-6 md:py-10 max-w-5xl">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 md:mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to Dashboard
         </button>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Deal Terms / Negotiation Form */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card border rounded-3xl flex flex-col h-[600px] overflow-hidden shadow-sm">
+            <div className="bg-card border rounded-3xl flex flex-col h-[500px] lg:h-[650px] overflow-hidden shadow-sm">
               <div className="flex flex-col border-b p-5 bg-muted/20">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="p-2 bg-primary/10 rounded-full">
@@ -192,8 +192,8 @@ const Negotiation = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="h-[600px] flex flex-col space-y-4">
-            <div className="bg-card border rounded-3xl p-6 shadow-sm flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="h-[500px] lg:h-[650px] flex flex-col space-y-4">
+            <div className="bg-card border rounded-3xl p-5 md:p-6 shadow-sm flex-1 flex flex-col overflow-hidden min-h-0">
               <h3 className="font-semibold text-base mb-4 shrink-0">Deal Summary</h3>
               <div className="space-y-3 text-sm mb-5 shrink-0">
                 <div className="flex justify-between items-center py-1"><span className="text-muted-foreground">Status</span><span className="font-medium capitalize bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs">{deal.status}</span></div>

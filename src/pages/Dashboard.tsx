@@ -33,7 +33,7 @@ const Dashboard = () => {
 
   const visibleDeals = useMemo(() => myDeals.slice(0, dealsVisible), [myDeals, dealsVisible]);
 
-  if (!user) { navigate('/auth?mode=login'); return null; }
+  if (!user) return null;
 
   return (
     <div className="min-h-screen flex flex-col">

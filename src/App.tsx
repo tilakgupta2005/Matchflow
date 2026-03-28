@@ -17,6 +17,8 @@ import Negotiation from "./pages/Negotiation";
 import Admin from "./pages/Admin";
 import Campaigns from "./pages/Campaigns";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { supabase } from "./lib/supabase";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,18 @@ const App = () => {
     fetchInfluencerProfiles();
     fetchCampaigns();
     fetchDeals();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        useStore.getState().setUser(null);
+      } else if (session?.user) {
+        useStore.getState().initializeUser();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (isLoading) {
@@ -56,14 +70,14 @@ const App = () => {
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/profile-edit" element={<ProfileEdit />} />
-            <Route path="/brand-profile-edit" element={<BrandProfileEdit />} />
+            <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
+            <Route path="/profile-edit" element={<ProtectedRoute><ProfileEdit /></ProtectedRoute>} />
+            <Route path="/brand-profile-edit" element={<ProtectedRoute><BrandProfileEdit /></ProtectedRoute>} />
             <Route path="/discover" element={<Discovery />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/negotiation/:dealId" element={<Negotiation />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/negotiation/:dealId" element={<ProtectedRoute><Negotiation /></ProtectedRoute>} />
+            <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

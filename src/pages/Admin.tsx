@@ -19,7 +19,7 @@ const Admin = () => {
     return ids.size;
   }, [campaigns]);
 
-  if (!user || user.role !== 'admin') { navigate('/'); return null; }
+  if (!user || user.role !== 'admin') return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">

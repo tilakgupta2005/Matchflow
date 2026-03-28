@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { toast } from 'sonner';
 
 export type UserRole = 'influencer' | 'brand' | 'admin';
 export type DealStatus = 'requested' | 'negotiating' | 'locked' | 'approved' | 'rejected' | 'failed';
@@ -75,7 +76,7 @@ export interface Deal {
   influencerName: string;
   brandId: string;
   brandName: string;
-  campaignId: string;
+  campaignId?: string;
   campaignTitle: string;
   status: DealStatus;
   amount: number;
@@ -165,17 +166,20 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchInfluencerProfiles: async () => {
     const { data, error } = await supabase.from('influencer_profiles').select('*');
-    if (!error && data) set({ influencerProfiles: data as InfluencerProfile[] });
+    if (error) toast.error(error.message);
+    else if (data) set({ influencerProfiles: data as InfluencerProfile[] });
   },
 
   fetchCampaigns: async () => {
     const { data, error } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false });
-    if (!error && data) set({ campaigns: data as Campaign[] });
+    if (error) toast.error(error.message);
+    else if (data) set({ campaigns: data as Campaign[] });
   },
 
   fetchDeals: async () => {
     const { data, error } = await supabase.from('deals').select('*').order('createdAt', { ascending: false });
-    if (!error && data) set({ deals: data as Deal[] });
+    if (error) toast.error(error.message);
+    else if (data) set({ deals: data as Deal[] });
   },
 
   fetchDealMessages: async (dealId) => {
@@ -184,6 +188,9 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   subscribeToDealMessages: (dealId) => {
+    const prevChannel = (window as any)._activeDealChannel;
+    if (prevChannel) supabase.removeChannel(prevChannel);
+
     const channel = supabase.channel(`public:deal_updates:${dealId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'deal_messages', filter: `dealId=eq.${dealId}` }, (payload) => {
         const newMsg = payload.new as DealMessage;
@@ -307,7 +314,11 @@ export const useStore = create<AppState>((set, get) => ({
     if (!influencer) return;
 
     try {
-      const webhookUrl = import.meta.env.VITE_NEGOTIATION_WEBHOOK_URL || 'http://localhost:5678/webhook/brand-negotiation-ai';
+      const webhookUrl = import.meta.env.VITE_NEGOTIATION_WEBHOOK_URL;
+      if (!webhookUrl) {
+        toast.error('VITE_NEGOTIATION_WEBHOOK_URL is strictly required for negotiations.');
+        return;
+      }
       const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -371,12 +382,19 @@ export const useStore = create<AppState>((set, get) => ({
   sendDealMessage: async (dealId, content) => {
     const user = get().user;
     if (!user) return;
-    const msg = { dealId, senderId: user.id, content };
+    const msg = { 
+      id: crypto.randomUUID(),
+      dealId, 
+      senderId: user.id, 
+      content,
+      createdAt: new Date().toISOString()
+    };
     const { data, error } = await supabase.from('deal_messages').insert(msg).select().single();
-    if (!error && data) {
-      set((s) => ({ dealMessages: [...s.dealMessages, data as DealMessage] }));
-    } else {
+    if (error) {
       console.error('Error sending message:', error);
+      toast.error('Failed to send message: ' + error.message);
+    } else if (data) {
+      set((s) => ({ dealMessages: [...s.dealMessages, data as DealMessage] }));
     }
   },
 

@@ -24,18 +24,18 @@ const Discovery = () => {
       toast.error('You already have a request for this campaign.');
       return;
     }
-    const newDeal = {
+    const newDeal: any = {
       id: crypto.randomUUID(),
       influencerId: type === 'to-influencer' ? targetId : user?.id || '',
       influencerName: type === 'to-influencer' ? targetName : user?.name || '',
       brandId: type === 'to-brand' ? targetId : user?.id || '',
       brandName: type === 'to-brand' ? targetName : user?.name || '',
-      campaignId: campaignId || '',
       campaignTitle: campaigns.find((c) => c.id === campaignId)?.title || 'Direct Collaboration',
-      status: 'requested' as const,
+      status: 'requested',
       amount: 0,
       createdAt: new Date().toISOString(),
     };
+    if (campaignId) newDeal.campaignId = campaignId;
     await addDeal(newDeal);
     addNotification(`New request sent to ${targetName}`);
     toast.success(`Request sent to ${targetName}! Negotiating terms...`);

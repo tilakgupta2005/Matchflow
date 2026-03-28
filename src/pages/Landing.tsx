@@ -33,7 +33,7 @@ const Landing = () => {
       <Header />
 
       {/* Hero */}
-      <section className="py-30 md:py-28 lg:py-12">
+      <section className="py-16 md:py-20 lg:py-24">
         <div className="container">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
@@ -79,7 +79,7 @@ const Landing = () => {
       </section>
 
       {/* Services */}
-      <section className="py-20 md:py-28">
+      <section className="py-16 md:py-24">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">How Matchflow Works</h2>
@@ -100,7 +100,7 @@ const Landing = () => {
       </section>
 
       {/* Stats */}
-      <section className="py-20 bg-foreground text-background">
+      <section className="py-16 md:py-20 bg-foreground text-background">
         <div className="container">
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-16">The Numbers Speak</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -115,7 +115,7 @@ const Landing = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-28">
+      <section className="py-16 md:py-24">
         <div className="container">
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-16">What People Say</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -149,7 +149,7 @@ const Landing = () => {
 
       {/* Final CTA */}
       {!user && (
-        <section className="py-20 bg-primary/10">
+        <section className="py-16 md:py-20 bg-primary/10">
           <div className="container text-center">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Find Your Match?</h2>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">Join thousands of creators and brands already growing together on Matchflow.</p>

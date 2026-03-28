@@ -33,7 +33,7 @@ const Campaigns = () => {
   const [campaignCity, setCampaignCity] = useState('');
   const [viewCampaign, setViewCampaign] = useState<string | null>(null);
 
-  if (!user || user.role !== 'brand') { navigate('/dashboard'); return null; }
+  if (!user || user.role !== 'brand') return null;
 
   const myCampaigns = campaigns.filter((c) => c.brandId === user.id);
   const viewing = viewCampaign ? campaigns.find((c) => c.id === viewCampaign) : null;
